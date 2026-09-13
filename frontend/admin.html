@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Админ-панель</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Админ-панель</h1>
+    <div class="user-box">
+      <span id="userLabel"></span>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">🌙</button>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Выйти</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" data-tab="bookings">Брони</button>
+      <button class="tab" data-tab="tables">Столики</button>
+      <button class="tab" data-tab="users">Пользователи</button>
+      <button class="tab" data-tab="calendar">Календарь</button>
+    </div>
+
+    <section id="tab-bookings">
+      <div class="card">
+        <h2>Все брони</h2>
+        <div id="bookingsBox"></div>
+      </div>
+    </section>
+
+    <section id="tab-tables" class="hidden">
+      <div class="card">
+        <h2>Карта зала</h2>
+        <div class="hall">
+          <div id="adminHallMap" class="hall-map"></div>
+          <div class="hall-legend">
+            <div class="item"><span class="dot free"></span> Активен</div>
+            <div class="item"><span class="dot busy"></span> Отключён</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Добавить столик</h2>
+        <form id="tableForm" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end;">
+          <div><label>Название</label><input name="name" placeholder="Столик №5" required /></div>
+          <div><label>Вместимость</label><input type="number" name="capacity" min="1" value="2" required /></div>
+          <div><label>Локация</label><input name="location" placeholder="Зал / VIP / Терраса" /></div>
+          <div><label>Описание</label><input name="description" placeholder="У окна..." /></div>
+          <button class="btn btn-primary" style="margin-bottom:14px;">Добавить</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Список столиков</h2>
+        <div id="tablesBox"></div>
+      </div>
+    </section>
+
+    <section id="tab-users" class="hidden">
+      <div class="card">
+        <h2>Пользователи</h2>
+        <div id="usersBox"></div>
+      </div>
+    </section>
+
+    <section id="tab-calendar" class="hidden">
+      <div class="card">
+        <h2>Загрузка на 14 дней</h2>
+        <div id="calendarBox" class="calendar"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="static/js/api.js"></script>
+  <script src="static/js/admin.js"></script>
+</body>
+</html>

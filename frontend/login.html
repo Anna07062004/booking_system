@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вход — Бронирование</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css" />
+
+
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <h1>Вход</h1>
+        <div id="err" class="alert alert-error hidden"></div>
+          <form id="form">
+            <label>Логин</label>
+            <input name="username" placeholder="admin" required autocomplete="username" />
+            <label>Пароль</label>
+            <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password" />
+            <button class="btn btn-primary">Войти</button>
+          </form>
+
+      <p class="switch">Нет аккаунта? <a href="register.html">Регистрация</a></p>
+
+      <p class="switch" style="margin-top:8px;font-size:12px;color:#64748b;">
+        Демо-админ: <b>admin / admin123</b>
+      </p>
+    </div>
+  </div>
+
+  <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему"
+        style="position:fixed;top:20px;right:20px;z-index:10;">🌙</button>
+
+  <script src="static/js/api.js"></script>
+    <script>
+      document.getElementById('form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('err');
+        err.classList.add('hidden');
+        const fd = new FormData(e.target);
+        try {
+          const data = await api('/api/auth/login', {
+            method: 'POST',
+            form: { username: fd.get('username'), password: fd.get('password') },
+            auth: false,
+          });
+          setToken(data.access_token);
+          setUser(data.user);
+          location.href = data.user.role === 'admin' ? 'admin.html' : 'dashboard.html';
+        } catch (ex) {
+          err.textContent = '' + ex.message;
+          err.classList.remove('hidden');
+        }
+      });
+    </script>
+</body>
+</html>

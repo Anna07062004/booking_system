@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Личный кабинет — Бронирование</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Бронирование</h1>
+    <div class="user-box">
+      <span id="userLabel"></span>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">🌙</button>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Выйти</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" data-tab="new">Новая бронь</button>
+      <button class="tab" data-tab="my">Мои брони</button>
+    </div>
+
+    <section id="tab-new">
+      <div class="card">
+        <h2>Карта зала — выберите столик</h2>
+
+        <div class="hall">
+          <div id="hallMap" class="hall-map"></div>
+          <div class="hall-legend">
+            <div class="item"><span class="dot free"></span> Свободен</div>
+            <div class="item"><span class="dot busy"></span> Занят</div>
+            <div class="item"><span class="dot selected"></span> Выбран</div>
+          </div>
+        </div>
+
+        <h2 style="margin-top:24px;font-size:16px;">Список столиков</h2>
+        <div id="tables" class="grid"></div>
+      </div>
+
+      <div class="card" id="bookingFormCard" style="display:none;">
+        <h2>Оформление брони — <span id="selectedTableName" style="color:#c4b5fd;"></span></h2>
+
+        <div id="busySlots"></div>
+        <div id="formErr" class="alert alert-error hidden"></div>
+        <div id="formOk" class="alert alert-success hidden"></div>
+
+        <form id="bookingForm">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div>
+              <label>Дата</label>
+              <input type="date" id="dateInput" required />
+            </div>
+            <div>
+              <label>Начало</label>
+              <input type="time" id="startInput" required />
+            </div>
+            <div>
+              <label>Окончание</label>
+              <input type="time" id="endInput" required />
+            </div>
+          </div>
+
+          <label>Кол-во гостей</label>
+          <input type="number" id="guestsInput" min="1" max="20" value="2" required />
+
+          <label>Комментарий (необязательно)</label>
+          <textarea id="commentInput" rows="2" placeholder="Например: у окна, есть ребёнок..."></textarea>
+
+          <button class="btn btn-primary">Забронировать</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="tab-my" class="hidden">
+      <div class="card">
+        <h2>Мои брони</h2>
+        <div id="myBookings"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="static/js/api.js"></script>
+  <script src="static/js/client.js"></script>
+</body>
+</html>
