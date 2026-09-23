@@ -943,3 +943,49 @@ body.light .hall-table[data-tooltip]:hover::before {
   font-size: 18px;
   opacity: 0.85;
 }
+
+.table-card.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  background: linear-gradient(160deg, rgba(239, 68, 68, 0.08), rgba(30, 41, 66, 0.6)) !important;
+  position: relative;
+}
+.table-card.disabled::before {
+  background: linear-gradient(90deg, #ef4444, #b91c1c) !important;
+  opacity: 1 !important;
+}
+.table-card.disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+.table-card.disabled h3 {
+  color: #fca5a5;
+  text-decoration: line-through;
+  text-decoration-color: rgba(239, 68, 68, 0.6);
+}
+.table-card.disabled::after {
+  content: red;
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 18px;
+  opacity: 0.85;
+}
+
+.hall-table.off svg {
+  filter: drop-shadow(0 4px 12px rgba(185, 28, 28, 0.5));
+}
+.hall-table.off .hall-table-name {
+  color: #fca5a5;
+  text-decoration: line-through;
+}
+
+/* Убираем старую «красную пульсацию» для отключённых, оставим только для занятых */
+.hall-table.busy:not(.off) svg {
+  animation: busyPulse 2.4s ease-in-out infinite;
+}
+@keyframes busyPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}

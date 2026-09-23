@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from .. import crud, schemas, auth
+from .. import crud, models, schemas, auth
 from ..database import get_db
 
 router = APIRouter(prefix="/api/tables", tags=["tables"])
@@ -40,6 +40,21 @@ def delete_table(
     db: Session = Depends(get_db),
     _admin=Depends(auth.get_current_admin),
 ):
+    has_bookings = (
+        db.query(models.Booking)
+        .filter(
+            models.Booking.table_id == table_id,
+            models.Booking.status.in_(("pending", "confirmed")),
+        )
+        .first()
+    )
+    if has_bookings:
+        raise HTTPException(
+            400,
+            "Нельзя удалить столик: на него есть активные брони. "
+            "Сначала отмените или завершите их.",
+        )
+
     if not crud.delete_table(db, table_id):
         raise HTTPException(404, "Столик не найден")
     return {"ok": True}
