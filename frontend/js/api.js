@@ -1,4 +1,4 @@
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = '';
 
 function getToken() { return localStorage.getItem('token'); }
 function setToken(t) { localStorage.setItem('token', t); }
@@ -6,14 +6,13 @@ function clearToken() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 }
-
 function getUser() {
   const u = localStorage.getItem('user');
   return u ? JSON.parse(u) : null;
 }
-
 function setUser(u) { localStorage.setItem('user', JSON.stringify(u)); }
 
+/* ============ HTTP ============ */
 async function api(path, { method = 'GET', body = null, form = null, auth = true } = {}) {
   const headers = {};
   if (auth && getToken()) headers['Authorization'] = 'Bearer ' + getToken();
@@ -27,7 +26,12 @@ async function api(path, { method = 'GET', body = null, form = null, auth = true
     payload = JSON.stringify(body);
   }
 
-  const res = await fetch(API_URL + path, { method, headers, body: payload });
+  let res;
+  try {
+    res = await fetch(API_URL + path, { method, headers, body: payload });
+  } catch (e) {
+    throw new Error('Сервер недоступен. Проверьте, что backend запущен.');
+  }
 
   if (res.status === 401) {
     clearToken();
@@ -61,14 +65,11 @@ function fmt(dt) {
   });
 }
 
-function initTheme() {
+/* ============ ТЕМА ============ */
+function applyTheme() {
   const saved = localStorage.getItem('theme') || 'dark';
   document.body.classList.toggle('light', saved === 'light');
-}
-
-function toggleTheme() {
-  const isLight = document.body.classList.toggle('light');
-  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  updateThemeIcon();
 }
 
 function updateThemeIcon() {
@@ -82,25 +83,16 @@ function toggleTheme() {
   updateThemeIcon();
 }
 
-document.addEventListener('DOMContentLoaded', updateThemeIcon);
-
-initTheme();
-
+/* ============ TOAST ============ */
 function showToast(message, type = 'info', duration = 3200) {
   let container = document.getElementById('toastContainer');
   if (!container) {
     container = document.createElement('div');
     container.id = 'toastContainer';
     container.style.cssText = `
-      position: fixed;
-      top: 24px;
-      right: 24px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-    `;
+      position: fixed; top: 24px; right: 24px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none;`;
     document.body.appendChild(container);
   }
 
@@ -115,25 +107,12 @@ function showToast(message, type = 'info', duration = 3200) {
   const toast = document.createElement('div');
   toast.textContent = message;
   toast.style.cssText = `
-    background: ${c.bg};
-    border: 1px solid ${c.border};
-    color: ${c.color};
-    padding: 14px 20px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: 'Inter', sans-serif;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-    max-width: 340px;
-    line-height: 1.4;
-    opacity: 0;
-    transform: translateX(20px);
-    transition: opacity 0.25s, transform 0.25s;
-    pointer-events: auto;
-    cursor: pointer;
-  `;
+    background: ${c.bg}; border: 1px solid ${c.border}; color: ${c.color};
+    padding: 14px 20px; border-radius: 12px; font-size: 14px; font-weight: 500;
+    font-family: 'Inter', sans-serif; backdrop-filter: blur(14px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); max-width: 340px;
+    line-height: 1.4; opacity: 0; transform: translateX(20px);
+    transition: opacity 0.25s, transform 0.25s; pointer-events: auto; cursor: pointer;`;
 
   toast.addEventListener('click', () => dismiss());
   container.appendChild(toast);
@@ -152,3 +131,5 @@ function showToast(message, type = 'info', duration = 3200) {
   setTimeout(dismiss, duration);
 }
 
+document.addEventListener('DOMContentLoaded', applyTheme);
+applyTheme();

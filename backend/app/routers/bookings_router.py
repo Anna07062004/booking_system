@@ -1,11 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime, timedelta
-from .. import crud, schemas, auth
+from .. import crud, models, schemas, auth
 from ..database import get_db
+from ..logging_config import logger
 
 router = APIRouter(prefix="/api/bookings", tags=["bookings"])
+
+ACTIVE_STATUSES = ("pending", "confirmed")
+
+
+def _parse_date(date: str) -> tuple[datetime, datetime]:
+    try:
+        day = datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(400, "Неверный формат даты (YYYY-MM-DD)")
+    return day, day + timedelta(days=1)
 
 
 @router.post("/", response_model=schemas.BookingOut)
@@ -64,42 +75,15 @@ def schedule(
 ):
     return crud.get_schedule(db, date_from, date_to)
 
-
-# Публичный эндпоинт: слоты занятости по столику на дату
-@router.get("/busy/{table_id}")
-def busy_slots(table_id: int, date: str, db: Session = Depends(get_db)):
-    try:
-        day = datetime.strptime(date, "%Y-%m-%d")
-    except ValueError:
-        raise HTTPException(400, "Неверный формат даты (YYYY-MM-DD)")
-    day_end = day + timedelta(days=1)
-    rows = crud.get_schedule(db, day, day_end)
-    return [
-        {
-            "id": b.id,
-            "start_time": b.start_time.isoformat(),
-            "end_time": b.end_time.isoformat(),
-            "status": b.status,
-        }
-        for b in rows
-        if b.table_id == table_id
-    ]
-
 @router.get("/busy-all")
 def busy_all(date: str, db: Session = Depends(get_db)):
-    """Возвращает {busy_table_ids: [...], table_slots: {table_id: [слоты]}} для указанной даты."""
-    try:
-        day = datetime.strptime(date, "%Y-%m-%d")
-    except ValueError:
-        raise HTTPException(400, "Неверный формат даты (YYYY-MM-DD)")
+    day, day_end = _parse_date(date)
 
-    day_end = day + timedelta(days=1)
-
-    # Все активные брони за этот день
     rows = (
         db.query(models.Booking)
+        .options(joinedload(models.Booking.table))
         .filter(
-            models.Booking.status.in_(("pending", "confirmed")),
+            models.Booking.status.in_(ACTIVE_STATUSES),
             models.Booking.start_time < day_end,
             models.Booking.end_time > day,
         )
@@ -107,7 +91,6 @@ def busy_all(date: str, db: Session = Depends(get_db)):
     )
 
     busy_table_ids = list({b.table_id for b in rows})
-
     table_slots: dict[int, list] = {}
     for b in rows:
         table_slots.setdefault(b.table_id, []).append({
@@ -117,8 +100,31 @@ def busy_all(date: str, db: Session = Depends(get_db)):
             "status": b.status,
         })
 
-    return {
-        "date": date,
-        "busy_table_ids": busy_table_ids,
-        "table_slots": table_slots,
-    }
+    return {"date": date, "busy_table_ids": busy_table_ids, "table_slots": table_slots}
+
+
+@router.get("/busy/{table_id}")
+def busy_slots(table_id: int, date: str, db: Session = Depends(get_db)):
+    day, day_end = _parse_date(date)
+
+    rows = (
+        db.query(models.Booking)
+        .filter(
+            models.Booking.table_id == table_id,          
+            models.Booking.status.in_(ACTIVE_STATUSES),
+            models.Booking.start_time < day_end,
+            models.Booking.end_time > day,
+        )
+        .order_by(models.Booking.start_time)
+        .all()
+    )
+
+    return [
+        {
+            "id": b.id,
+            "start_time": b.start_time.isoformat(),
+            "end_time": b.end_time.isoformat(),
+            "status": b.status,
+        }
+        for b in rows
+    ]

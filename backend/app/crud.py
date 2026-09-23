@@ -68,15 +68,18 @@ def delete_table(db: Session, table_id: int):
 ACTIVE_STATUSES = ("pending", "confirmed")
 
 
-def find_conflicts(db: Session, table_id: int, start: datetime, end: datetime, exclude_id: int = None):
+def find_conflicts(
+    db: Session, table_id: int, start: datetime, end: datetime,
+    exclude_booking_id: int | None = None,
+):
     q = db.query(models.Booking).filter(
         models.Booking.table_id == table_id,
         models.Booking.status.in_(ACTIVE_STATUSES),
         models.Booking.start_time < end,
         models.Booking.end_time > start,
     )
-    if exclude_id:
-        q = q.filter(models.Booking.id != exclude_id)
+    if exclude_booking_id:
+        q = q.filter(models.Booking.id != exclude_booking_id)
     return q.all()
 
 
@@ -141,9 +144,18 @@ def cancel_booking(db: Session, booking_id: int, user: models.User):
 def update_booking_status(db: Session, booking_id: int, status: str):
     if status not in ("pending", "confirmed", "rejected", "cancelled"):
         raise ValueError("Недопустимый статус")
+
     b = get_booking(db, booking_id)
     if not b:
         raise ValueError("Бронь не найдена")
+
+    if status == "confirmed":
+        conflicts = find_conflicts(
+            db, b.table_id, b.start_time, b.end_time, exclude_booking_id=b.id
+        )
+        if conflicts:
+            raise ValueError("Нельзя подтвердить: слот уже занят другой бронью")
+
     b.status = status
     db.commit()
     db.refresh(b)
